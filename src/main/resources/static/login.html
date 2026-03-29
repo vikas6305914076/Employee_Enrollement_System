@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMS Login</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="login-page">
+<main class="auth-shell">
+    <section class="auth-showcase">
+        <span class="eyebrow">Employee Enrollment System</span>
+        <h1>Secure workforce operations with a cleaner, more confident sign-in experience.</h1>
+        <p>
+            Access the admin cockpit, employee directory, and self-service profile views from a single secure entry
+            point built around JWT-based sessions.
+        </p>
+
+        <div class="hero-pills">
+            <span class="compact-pill">JWT authentication</span>
+            <span class="compact-pill success">Role-aware navigation</span>
+            <span class="compact-pill warning">Admin and employee access</span>
+        </div>
+
+    </section>
+
+    <section class="card login-card auth-card">
+        <div class="panel-header">
+            <div>
+                <span class="section-kicker">Sign In</span>
+                <h2 class="panel-title">Welcome back</h2>
+            </div>
+            <p class="panel-subtitle">
+                Use your company username and password to continue to the admin workspace or employee profile.
+            </p>
+        </div>
+
+        <form id="loginForm" class="stack">
+            <div id="message" class="message"></div>
+
+            <div class="field">
+                <label for="username">Username</label>
+                <input id="username" name="username" placeholder="Enter username" required>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" placeholder="Enter password" required>
+            </div>
+
+            <div class="button-row">
+                <button type="submit">Login</button>
+            </div>
+        </form>
+
+        <div class="info-card">
+            <strong>Session behavior</strong>
+            <span class="muted">
+                Successful login stores your session locally and redirects you based on your access role.
+            </span>
+        </div>
+    </section>
+</main>
+
+<script src="/assets/app.js"></script>
+<script>
+    const session = window.EmsApp.getSession();
+    if (session) {
+        window.EmsApp.redirectToDefaultPage();
+    }
+
+    const form = document.getElementById("loginForm");
+    const message = document.getElementById("message");
+
+    function showMessage(type, text) {
+        message.className = `message show ${type}`;
+        message.textContent = text;
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const payload = {
+            username: form.username.value.trim(),
+            password: form.password.value
+        };
+
+        try {
+            const { response, payload: result } = await window.EmsApp.request("/auth/login", {
+                method: "POST",
+                body: payload,
+                auth: false
+            });
+
+            if (!response.ok) {
+                showMessage("error", window.EmsApp.extractError(result, "Login failed"));
+                return;
+            }
+
+            window.EmsApp.storeSession(result.data);
+            showMessage("success", result.message);
+            window.setTimeout(window.EmsApp.redirectToDefaultPage, 500);
+        } catch (error) {
+            showMessage("error", "Unable to connect to the server");
+        }
+    });
+</script>
+</body>
+</html>

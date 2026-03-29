@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Employee Create</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="admin-page">
+<div class="admin-shell">
+    <header class="admin-topbar">
+        <div class="admin-brand">
+            <span class="section-kicker">Admin Workspace</span>
+            <h1>Employee administration</h1>
+            <p>Create employee records with only the fields needed to onboard someone correctly.</p>
+        </div>
+
+        <div class="admin-actions">
+            <a class="button secondary" href="/employee-list.html">Dashboard</a>
+            <a class="button secondary" href="/profile.html">My Profile</a>
+            <button type="button" class="secondary" id="logoutButton">Logout</button>
+        </div>
+    </header>
+
+    <section class="admin-header">
+        <div class="admin-panel-title">
+            <span class="section-kicker">Create Employee</span>
+            <h2 class="panel-title">Add a new employee</h2>
+            <p class="panel-subtitle">The form below follows the same mandatory rules as the backend, so invalid data is caught before submission.</p>
+        </div>
+
+        <div class="admin-meta-row">
+            <span class="compact-pill">Required fields are marked</span>
+            <span class="compact-pill success">Admin only flow</span>
+            <span class="compact-pill warning">Future joining dates are blocked</span>
+        </div>
+    </section>
+
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div class="admin-note">
+                <strong>Required before save</strong>
+                <p>First name, last name, username, email, phone, department, job role, salary, joining date, address, password, and access role.</p>
+            </div>
+
+            <div class="admin-note">
+                <strong>Username rules</strong>
+                <p>Use 4 to 30 characters with letters, numbers, dots, underscores, or hyphens only.</p>
+            </div>
+
+            <div class="admin-note">
+                <strong>Password rules</strong>
+                <p>Passwords must be 8 to 64 characters and include upper, lower, number, and special character.</p>
+            </div>
+
+            <div class="admin-note">
+                <strong>Role selection</strong>
+                <p>Use <code>USER</code> for employees and <code>ADMIN</code> only for people who should manage records.</p>
+            </div>
+        </aside>
+
+        <main class="admin-panel">
+            <div class="admin-panel-header">
+                <div class="admin-panel-title">
+                    <h3>Employee details</h3>
+                    <p class="admin-subtle">Fill all mandatory fields, then submit once the record is complete.</p>
+                </div>
+            </div>
+
+            <form id="employeeForm" class="stack" novalidate>
+                <div id="message" class="message"></div>
+
+                <div class="admin-section">
+                    <div class="admin-form-grid">
+                        <div class="field">
+                            <label for="firstName">First Name <span class="required-mark">*</span></label>
+                            <input id="firstName" name="firstName" maxlength="50" placeholder="Aarav" autocomplete="given-name" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="lastName">Last Name <span class="required-mark">*</span></label>
+                            <input id="lastName" name="lastName" maxlength="50" placeholder="Sharma" autocomplete="family-name" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="username">Username <span class="required-mark">*</span></label>
+                            <input
+                                id="username"
+                                name="username"
+                                minlength="4"
+                                maxlength="30"
+                                pattern="^[A-Za-z0-9._-]+$"
+                                placeholder="aarav.sharma"
+                                autocomplete="username"
+                                required
+                            >
+                        </div>
+
+                        <div class="field">
+                            <label for="email">Email <span class="required-mark">*</span></label>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                maxlength="100"
+                                placeholder="aarav.sharma@company.com"
+                                autocomplete="email"
+                                required
+                            >
+                        </div>
+
+                        <div class="field">
+                            <label for="phone">Phone <span class="required-mark">*</span></label>
+                            <input
+                                id="phone"
+                                name="phone"
+                                inputmode="numeric"
+                                maxlength="10"
+                                pattern="\d{10}"
+                                placeholder="9876543210"
+                                required
+                            >
+                        </div>
+
+                        <div class="field">
+                            <label for="joiningDate">Joining Date <span class="required-mark">*</span></label>
+                            <input id="joiningDate" name="joiningDate" type="date" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="department">Department <span class="required-mark">*</span></label>
+                            <input id="department" name="department" maxlength="100" placeholder="Engineering" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="role">Job Role <span class="required-mark">*</span></label>
+                            <input id="role" name="role" maxlength="100" placeholder="Software Engineer" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="salary">Salary <span class="required-mark">*</span></label>
+                            <input id="salary" name="salary" type="number" min="0.01" step="0.01" placeholder="65000" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="userRole">Access Role <span class="required-mark">*</span></label>
+                            <select id="userRole" name="userRole" required>
+                                <option value="">Select role</option>
+                                <option value="USER">USER</option>
+                                <option value="ADMIN">ADMIN</option>
+                            </select>
+                        </div>
+
+                        <div class="field span-full">
+                            <label for="address">Address <span class="required-mark">*</span></label>
+                            <textarea id="address" name="address" maxlength="255" placeholder="Whitefield, Bengaluru" required></textarea>
+                        </div>
+
+                        <div class="field span-full">
+                            <label for="password">Temporary Password <span class="required-mark">*</span></label>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                minlength="8"
+                                maxlength="64"
+                                placeholder="Temp@123"
+                                autocomplete="new-password"
+                                required
+                            >
+                            <span class="helper">Use upper, lower, number, and at least one special character.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button type="submit" id="submitButton">Create Employee</button>
+                    <button type="button" class="secondary" id="resetButton">Clear Form</button>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+
+<script src="/assets/app.js"></script>
+<script>
+(function () {
+    const session = window.EmsApp.requireAuth(["ADMIN"]);
+    if (!session) {
+        return;
+    }
+    window.EmsApp.showPendingLoginWarning();
+
+    const form = document.getElementById("employeeForm");
+    const message = document.getElementById("message");
+    const resetButton = document.getElementById("resetButton");
+    const submitButton = document.getElementById("submitButton");
+    const logoutButton = document.getElementById("logoutButton");
+
+    function showMessage(type, text) {
+        message.className = `message show ${type}`;
+        message.textContent = text;
+    }
+
+    function clearMessage() {
+        message.className = "message";
+        message.textContent = "";
+    }
+
+    function setJoiningDateLimit() {
+        form.joiningDate.max = window.EmsApp.toLocalDateInputValue(new Date());
+    }
+
+    function buildPayload() {
+        return {
+            firstName: form.firstName.value.trim(),
+            lastName: form.lastName.value.trim(),
+            username: form.username.value.trim(),
+            email: form.email.value.trim(),
+            phone: form.phone.value.trim(),
+            department: form.department.value.trim(),
+            role: form.role.value.trim(),
+            salary: form.salary.value,
+            joiningDate: form.joiningDate.value,
+            address: form.address.value.trim(),
+            password: form.password.value,
+            userRole: form.userRole.value
+        };
+    }
+
+    function validateForm(payload) {
+        window.EmsApp.clearFormErrors(form);
+        const errors = window.EmsApp.validateEmployeePayload(payload, { mode: "create" });
+
+        if (!errors.length) {
+            return true;
+        }
+
+        window.EmsApp.applyFieldErrors(form, errors);
+        window.EmsApp.focusFirstInvalidField(form);
+        showMessage("error", errors[0].message);
+        return false;
+    }
+
+    async function submitEmployee(payload) {
+        submitButton.disabled = true;
+
+        try {
+            const { response, payload: result } = await window.EmsApp.request("/employees", {
+                method: "POST",
+                body: {
+                    ...payload,
+                    salary: Number(payload.salary)
+                }
+            });
+
+            if (!response.ok) {
+                const fieldErrors = window.EmsApp.extractFieldErrors(result);
+                window.EmsApp.clearFormErrors(form);
+                if (fieldErrors.length) {
+                    window.EmsApp.applyFieldErrors(form, fieldErrors);
+                    window.EmsApp.focusFirstInvalidField(form);
+                }
+                showMessage("error", window.EmsApp.extractError(result, "Employee creation failed"));
+                return;
+            }
+
+            showMessage("success", `${result.message}. Employee ID: ${result.data.id}`);
+            form.reset();
+            window.EmsApp.clearFormErrors(form);
+            setJoiningDateLimit();
+        } catch (error) {
+            showMessage("error", "Unable to connect to the server");
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
+
+    resetButton.addEventListener("click", () => {
+        form.reset();
+        window.EmsApp.clearFormErrors(form);
+        clearMessage();
+        setJoiningDateLimit();
+    });
+
+    logoutButton.addEventListener("click", window.EmsApp.redirectToLogin);
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearMessage();
+
+        const payload = buildPayload();
+        if (!validateForm(payload)) {
+            return;
+        }
+
+        await submitEmployee(payload);
+    });
+
+    setJoiningDateLimit();
+}());
+</script>
+</body>
+</html>

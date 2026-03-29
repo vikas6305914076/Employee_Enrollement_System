@@ -1,0 +1,483 @@
+{
+  "info": {
+    "name": "Employee Enrollment System",
+    "_postman_id": "d74d43c3-f759-4b84-8fb1-ems-collection",
+    "description": "JWT-based Postman collection for the Employee Enrollment System. Run the Login request first or run the whole collection in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "username",
+      "value": "hr.admin"
+    },
+    {
+      "key": "password",
+      "value": "Admin@123"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "employeeId",
+      "value": "1"
+    },
+    {
+      "key": "enrolledEmployeeId",
+      "value": "1"
+    },
+    {
+      "key": "newEmployeeUsername",
+      "value": ""
+    },
+    {
+      "key": "newEmployeeEmail",
+      "value": ""
+    },
+    {
+      "key": "newEmployeePhone",
+      "value": ""
+    },
+    {
+      "key": "enrolledEmployeeUsername",
+      "value": ""
+    },
+    {
+      "key": "enrolledEmployeeEmail",
+      "value": ""
+    },
+    {
+      "key": "enrolledEmployeePhone",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var payload = pm.response.json();",
+                  "var data = payload && payload.data ? payload.data : null;",
+                  "",
+                  "if (!data || !data.accessToken) {",
+                  "    throw new Error(\"accessToken missing in login response\");",
+                  "}",
+                  "",
+                  "pm.collectionVariables.set(\"accessToken\", data.accessToken);",
+                  "",
+                  "if (data.user && data.user.employeeId) {",
+                  "    pm.collectionVariables.set(\"currentUserId\", String(data.user.employeeId));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Authenticates the bootstrap admin and saves the JWT into the collection variable accessToken."
+          },
+          "response": []
+        },
+        {
+          "name": "Current Authenticated User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Current user returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Uses the JWT saved by the Login request."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Employee Management",
+      "item": [
+        {
+          "name": "Create Employee",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var suffix = Date.now().toString();",
+                  "var phoneTail = suffix.slice(-9);",
+                  "",
+                  "while (phoneTail.length < 9) {",
+                  "    phoneTail = \"0\" + phoneTail;",
+                  "}",
+                  "",
+                  "pm.collectionVariables.set(\"newEmployeeUsername\", \"postman.user.\" + suffix);",
+                  "pm.collectionVariables.set(\"newEmployeeEmail\", \"postman.user.\" + suffix + \"@example.com\");",
+                  "pm.collectionVariables.set(\"newEmployeePhone\", \"9\" + phoneTail);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Create employee returns 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var payload = pm.response.json();",
+                  "var data = payload && payload.data ? payload.data : null;",
+                  "",
+                  "if (data && data.id) {",
+                  "    pm.collectionVariables.set(\"employeeId\", String(data.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Create\",\n  \"username\": \"{{newEmployeeUsername}}\",\n  \"email\": \"{{newEmployeeEmail}}\",\n  \"phone\": \"{{newEmployeePhone}}\",\n  \"department\": \"Engineering\",\n  \"role\": \"Software Engineer\",\n  \"salary\": 65000,\n  \"joiningDate\": \"2024-01-10\",\n  \"address\": \"Bengaluru\",\n  \"password\": \"Temp@123\",\n  \"userRole\": \"USER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/employees",
+            "description": "Creates a new employee with unique username, email, and phone values for every run."
+          },
+          "response": []
+        },
+        {
+          "name": "Enroll Employee",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var suffix = (Date.now() + 1).toString();",
+                  "var phoneTail = suffix.slice(-9);",
+                  "",
+                  "while (phoneTail.length < 9) {",
+                  "    phoneTail = \"0\" + phoneTail;",
+                  "}",
+                  "",
+                  "pm.collectionVariables.set(\"enrolledEmployeeUsername\", \"postman.enroll.\" + suffix);",
+                  "pm.collectionVariables.set(\"enrolledEmployeeEmail\", \"postman.enroll.\" + suffix + \"@example.com\");",
+                  "pm.collectionVariables.set(\"enrolledEmployeePhone\", \"8\" + phoneTail);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Enroll employee returns 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var payload = pm.response.json();",
+                  "var data = payload && payload.data ? payload.data : null;",
+                  "",
+                  "if (data && data.id) {",
+                  "    pm.collectionVariables.set(\"enrolledEmployeeId\", String(data.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Enroll\",\n  \"username\": \"{{enrolledEmployeeUsername}}\",\n  \"email\": \"{{enrolledEmployeeEmail}}\",\n  \"phone\": \"{{enrolledEmployeePhone}}\",\n  \"department\": \"Support\",\n  \"role\": \"Analyst\",\n  \"salary\": 45000,\n  \"joiningDate\": \"2024-02-15\",\n  \"address\": \"Hyderabad\",\n  \"password\": \"Temp@123\",\n  \"userRole\": \"USER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/employees/enroll",
+            "description": "Backward-compatible employee creation alias."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Employees",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get all employees returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/employees?page=0&size=10&sort=createdAt&direction=desc",
+            "description": "Returns the paginated employee directory."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Employee By Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get employee by id returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/employees/{{employeeId}}",
+            "description": "Uses employeeId captured from the Create Employee request."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Employee Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get current profile returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/employees/me",
+            "description": "Returns the profile of the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Update employee returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9123456789\",\n  \"department\": \"Platform Engineering\",\n  \"role\": \"Senior Software Engineer\",\n  \"salary\": 85000,\n  \"address\": \"Whitefield, Bengaluru\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/employees/{{employeeId}}",
+            "description": "Updates the employee created earlier in the collection run."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Employee Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Update employee status returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"INACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/employees/{{employeeId}}/status",
+            "description": "Marks the created employee inactive."
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Update Employee Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Bulk update employee status returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeIds\": [{{employeeId}}, {{enrolledEmployeeId}}],\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/employees/status/bulk",
+            "description": "Re-activates the employees created by the Create Employee and Enroll Employee requests."
+          },
+          "response": []
+        },
+        {
+          "name": "Soft Delete Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Soft delete employee returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/employees/{{employeeId}}",
+            "description": "Soft deletes the employee created earlier in the collection run."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

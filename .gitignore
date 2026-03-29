@@ -1,0 +1,13 @@
+target/
+*.log
+.tools/
+.tmp-remote-inspect/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

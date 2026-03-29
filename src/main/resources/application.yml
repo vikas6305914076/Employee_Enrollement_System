@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: employee-enrollment-system
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
+
+app:
+  jwt:
+    secret: ${EMS_JWT_SECRET:ZW1zLXN1cGVyLXNlY3JldC1rZXktZm9yLWRldi1vbmx5LXBsZWFzZS1jaGFuZ2UtdGhpcy1pbi1wcm9kLTIwMjY=}
+    access-token-expiration: ${EMS_JWT_ACCESS_TOKEN_EXPIRATION:PT8H}
+  bootstrap-admin:
+    enabled: ${EMS_BOOTSTRAP_ADMIN_ENABLED:true}
+    first-name: ${EMS_BOOTSTRAP_ADMIN_FIRST_NAME:System}
+    last-name: ${EMS_BOOTSTRAP_ADMIN_LAST_NAME:Admin}
+    email: ${EMS_BOOTSTRAP_ADMIN_EMAIL:admin@ems.local}
+    phone: ${EMS_BOOTSTRAP_ADMIN_PHONE:9876543210}
+    department: ${EMS_BOOTSTRAP_ADMIN_DEPARTMENT:Human Resources}
+    role: ${EMS_BOOTSTRAP_ADMIN_ROLE:HR Administrator}
+    salary: ${EMS_BOOTSTRAP_ADMIN_SALARY:95000}
+    joining-date: ${EMS_BOOTSTRAP_ADMIN_JOINING_DATE:2024-01-01}
+    address: ${EMS_BOOTSTRAP_ADMIN_ADDRESS:Corporate HQ, Bengaluru}
+    username: ${EMS_BOOTSTRAP_ADMIN_USERNAME:hr.admin}
+    password: ${EMS_BOOTSTRAP_ADMIN_PASSWORD:Admin@123}
+
+logging:
+  level:
+    com.company.ems: INFO

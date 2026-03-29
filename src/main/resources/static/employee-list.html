@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="admin-page">
+<div class="admin-shell">
+    <header class="admin-topbar">
+        <div class="admin-brand">
+            <span class="section-kicker">Admin Dashboard</span>
+            <h1>Employee directory</h1>
+            <p>Search, update, and export employee records.</p>
+        </div>
+        <div class="admin-actions">
+            <a class="button secondary" href="/index.html">Add Employee</a>
+            <a class="button secondary" href="/profile.html">My Profile</a>
+            <button type="button" class="secondary" id="logoutButton">Logout</button>
+        </div>
+    </header>
+
+    <section class="admin-header">
+        <div class="admin-panel-header">
+            <div class="admin-panel-title">
+                <h2 class="panel-title">Workforce records</h2>
+                <p class="admin-quick-info"><strong>Filter, edit, change status, and export from one place.</strong></p>
+            </div>
+            <div class="admin-meta-row">
+                <span class="compact-pill" id="operatorIdentity">Admin session</span>
+                <span class="compact-pill" id="operatorRole">ADMIN</span>
+                <span class="compact-pill success" id="sessionExpiry">Session active</span>
+                <span class="compact-pill warning" id="refreshSnapshot">Not refreshed yet</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-summary-grid">
+        <div class="admin-summary-card"><strong id="totalEmployees">0</strong><span>Total matching employees</span></div>
+        <div class="admin-summary-card"><strong id="employeesShown">0</strong><span>Employees on this page</span></div>
+        <div class="admin-summary-card"><strong id="activeEmployees">0</strong><span>Active on this page</span></div>
+        <div class="admin-summary-card"><strong id="inactiveEmployees">0</strong><span>Inactive on this page</span></div>
+        <div class="admin-summary-card"><strong id="averageSalary">INR 0</strong><span>Average salary on this page</span></div>
+    </section>
+
+    <section class="admin-panel">
+        <div class="admin-panel-header">
+            <div class="admin-panel-title">
+                <h3>Filters and actions</h3>
+                <p class="admin-subtle">All filters are optional. Salary range must stay valid before search or export.</p>
+            </div>
+            <div class="admin-table-meta">
+                <strong id="pageMeta">Page 1 of 1</strong>
+                <span id="pagerSummary">No employees loaded yet.</span>
+            </div>
+        </div>
+
+        <form id="filtersForm" novalidate>
+            <div class="admin-filter-grid">
+                <div class="field"><label for="searchInput">Search</label><input id="searchInput" name="searchInput" placeholder="Name, email, username, department"></div>
+                <div class="field"><label for="departmentFilter">Department</label><input id="departmentFilter" name="departmentFilter" placeholder="Engineering"></div>
+                <div class="field"><label for="roleFilter">Job Role</label><input id="roleFilter" name="roleFilter" placeholder="Software Engineer"></div>
+                <div class="field"><label for="statusFilter">Status</label><select id="statusFilter" name="statusFilter"><option value="">All statuses</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></div>
+                <div class="field"><label for="minSalary">Minimum Salary</label><input id="minSalary" name="minSalary" type="number" min="0" step="0.01" placeholder="0"></div>
+                <div class="field"><label for="maxSalary">Maximum Salary</label><input id="maxSalary" name="maxSalary" type="number" min="0" step="0.01" placeholder="100000"></div>
+                <div class="field"><label for="pageSize">Page Size</label><select id="pageSize" name="pageSize"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="50">50</option></select></div>
+                <div class="field"><label for="sortField">Sort By</label><select id="sortField" name="sortField"><option value="name" selected>Name</option><option value="department">Department</option><option value="role">Job Role</option><option value="salary">Salary</option><option value="joiningDate">Joining Date</option><option value="status">Status</option><option value="createdAt">Created At</option></select></div>
+                <div class="field"><label for="sortDirection">Direction</label><select id="sortDirection" name="sortDirection"><option value="asc" selected>Ascending</option><option value="desc">Descending</option></select></div>
+                <div class="field"><label for="autoRefresh">Auto Refresh</label><select id="autoRefresh" name="autoRefresh"><option value="0" selected>Manual only</option><option value="30000">Every 30 seconds</option><option value="60000">Every 60 seconds</option><option value="120000">Every 2 minutes</option></select></div>
+            </div>
+            <div class="admin-filter-actions">
+                <button type="submit">Apply Filters</button>
+                <button type="button" class="secondary" id="clearFiltersButton">Clear Filters</button>
+                <button type="button" class="secondary" id="refreshButton">Refresh</button>
+                <button type="button" class="ghost" id="exportButton">Export CSV</button>
+            </div>
+        </form>
+
+        <div class="chip-row" id="activeFilterChips" style="margin-top:16px;"><span class="chip muted">No filters applied</span></div>
+        <div id="message" class="message"></div>
+
+        <div class="admin-table-header">
+            <div class="admin-table-meta">
+                <strong>Employee records</strong>
+                <span id="selectionSummary">0 selected on this page</span>
+            </div>
+            <div class="admin-status-group">
+                <button type="button" class="secondary" id="activateSelectedButton" disabled>Activate Selected</button>
+                <button type="button" class="ghost" id="deactivateSelectedButton" disabled>Deactivate Selected</button>
+            </div>
+        </div>
+
+        <div class="table-shell">
+            <table>
+                <thead>
+                <tr>
+                    <th class="checkbox-cell"><input type="checkbox" id="selectAllRows" aria-label="Select all employees on this page"></th>
+                    <th>ID</th>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Job Role</th>
+                    <th>Access</th>
+                    <th>Joined</th>
+                    <th class="numeric-cell">Salary</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="employeeTableBody">
+                <tr><td colspan="10" class="empty-state">Loading employee records...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pager">
+            <div id="pagerFootnote">Use the pager to move across filtered results.</div>
+            <div class="inline-actions">
+                <button type="button" class="secondary" id="previousPage">Previous</button>
+                <button type="button" class="secondary" id="nextPage">Next</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="/assets/app.js"></script>
+<script>
+(function () {
+const session = window.EmsApp.requireAuth(["ADMIN"]);
+if (!session) return;
+window.EmsApp.showPendingLoginWarning();
+const safe = window.EmsApp.escapeHtml;
+const elements = {
+    message: document.getElementById("message"),
+    filtersForm: document.getElementById("filtersForm"),
+    searchInput: document.getElementById("searchInput"),
+    departmentFilter: document.getElementById("departmentFilter"),
+    roleFilter: document.getElementById("roleFilter"),
+    statusFilter: document.getElementById("statusFilter"),
+    minSalary: document.getElementById("minSalary"),
+    maxSalary: document.getElementById("maxSalary"),
+    pageSize: document.getElementById("pageSize"),
+    sortField: document.getElementById("sortField"),
+    sortDirection: document.getElementById("sortDirection"),
+    autoRefresh: document.getElementById("autoRefresh"),
+    clearFiltersButton: document.getElementById("clearFiltersButton"),
+    refreshButton: document.getElementById("refreshButton"),
+    exportButton: document.getElementById("exportButton"),
+    logoutButton: document.getElementById("logoutButton"),
+    activeFilterChips: document.getElementById("activeFilterChips"),
+    employeeTableBody: document.getElementById("employeeTableBody"),
+    selectAllRows: document.getElementById("selectAllRows"),
+    previousPage: document.getElementById("previousPage"),
+    nextPage: document.getElementById("nextPage"),
+    selectionSummary: document.getElementById("selectionSummary"),
+    totalEmployees: document.getElementById("totalEmployees"),
+    employeesShown: document.getElementById("employeesShown"),
+    activeEmployees: document.getElementById("activeEmployees"),
+    inactiveEmployees: document.getElementById("inactiveEmployees"),
+    averageSalary: document.getElementById("averageSalary"),
+    operatorIdentity: document.getElementById("operatorIdentity"),
+    operatorRole: document.getElementById("operatorRole"),
+    sessionExpiry: document.getElementById("sessionExpiry"),
+    refreshSnapshot: document.getElementById("refreshSnapshot"),
+    pageMeta: document.getElementById("pageMeta"),
+    pagerSummary: document.getElementById("pagerSummary"),
+    pagerFootnote: document.getElementById("pagerFootnote"),
+    activateSelectedButton: document.getElementById("activateSelectedButton"),
+    deactivateSelectedButton: document.getElementById("deactivateSelectedButton")
+};
+const state = { page: 0, totalPages: 0, totalElements: 0, rows: [], selectedIds: new Set(), lastRefreshedAt: null, autoRefreshHandle: null, loading: false };
+function showMessage(type, text) { elements.message.className = `message show ${type}`; elements.message.textContent = text; }
+function clearMessage() { elements.message.className = "message"; elements.message.textContent = ""; }
+function badgeClass(status) { return status === "ACTIVE" ? "badge active" : "badge inactive"; }
+function roleBadgeClass(role) { return role === "ADMIN" ? "badge admin" : "badge user"; }
+function setSessionSummary() {
+    if (!session) return;
+    elements.operatorIdentity.textContent = session.user.fullName || session.user.username || "Administrator";
+    elements.operatorRole.textContent = session.user.userRole || "ADMIN";
+    elements.sessionExpiry.textContent = session.expiresAt ? `Expires ${window.EmsApp.formatDateTime(session.expiresAt)}` : "Session active";
+}
+function renderFilterChips() {
+    const entries = [
+        ["Search", elements.searchInput.value.trim()],
+        ["Department", elements.departmentFilter.value.trim()],
+        ["Job Role", elements.roleFilter.value.trim()],
+        ["Status", elements.statusFilter.value.trim()],
+        ["Min Salary", elements.minSalary.value.trim() ? window.EmsApp.formatCurrency(Number(elements.minSalary.value)) : ""],
+        ["Max Salary", elements.maxSalary.value.trim() ? window.EmsApp.formatCurrency(Number(elements.maxSalary.value)) : ""]
+    ].filter(([, value]) => Boolean(value));
+    elements.activeFilterChips.innerHTML = entries.length ? entries.map(([label, value]) => `<span class="chip">${safe(label)}: ${safe(value)}</span>`).join("") : '<span class="chip muted">No filters applied</span>';
+}
+function validateFilters() {
+    window.EmsApp.clearFormErrors(elements.filtersForm);
+    const errors = window.EmsApp.validateEmployeeFilters({ minSalary: elements.minSalary.value.trim(), maxSalary: elements.maxSalary.value.trim() });
+    if (!errors.length) return true;
+    window.EmsApp.applyFieldErrors(elements.filtersForm, errors);
+    window.EmsApp.focusFirstInvalidField(elements.filtersForm);
+    showMessage("error", errors[0].message);
+    return false;
+}
+function buildQuery(overrides) {
+    const query = new URLSearchParams({
+        page: String(overrides && overrides.page !== undefined ? overrides.page : state.page),
+        size: String(overrides && overrides.size !== undefined ? overrides.size : elements.pageSize.value),
+        sort: elements.sortField.value,
+        direction: elements.sortDirection.value
+    });
+    [["search", elements.searchInput.value.trim()], ["department", elements.departmentFilter.value.trim()], ["role", elements.roleFilter.value.trim()], ["status", elements.statusFilter.value.trim()], ["minSalary", elements.minSalary.value.trim()], ["maxSalary", elements.maxSalary.value.trim()]].forEach(([k, v]) => { if (v) query.set(k, v); });
+    return query;
+}
+function updateSummary(rows) {
+    const visible = rows.length;
+    const active = rows.filter((employee) => employee.status === "ACTIVE").length;
+    const inactive = rows.filter((employee) => employee.status === "INACTIVE").length;
+    const avg = visible ? rows.reduce((total, employee) => total + Number(employee.salary || 0), 0) / visible : 0;
+    const pages = Math.max(state.totalPages, 1);
+    elements.totalEmployees.textContent = String(state.totalElements);
+    elements.employeesShown.textContent = String(visible);
+    elements.activeEmployees.textContent = String(active);
+    elements.inactiveEmployees.textContent = String(inactive);
+    elements.averageSalary.textContent = window.EmsApp.formatCurrency(avg);
+    elements.pageMeta.textContent = `Page ${state.page + 1} of ${pages}`;
+    elements.pagerSummary.textContent = `${state.totalElements} employee(s) match the current view.`;
+    elements.pagerFootnote.textContent = `Showing ${visible} record(s) on this page.`;
+    elements.refreshSnapshot.textContent = state.lastRefreshedAt ? `Refreshed ${window.EmsApp.formatDateTime(state.lastRefreshedAt)}` : "Not refreshed yet";
+}
+function updateSelectionState() {
+    const currentIds = state.rows.map((employee) => String(employee.id));
+    const selected = currentIds.filter((id) => state.selectedIds.has(id));
+    elements.selectionSummary.textContent = `${selected.length} selected on this page`;
+    elements.activateSelectedButton.disabled = selected.length === 0;
+    elements.deactivateSelectedButton.disabled = selected.length === 0;
+    elements.selectAllRows.checked = Boolean(currentIds.length) && selected.length === currentIds.length;
+    elements.selectAllRows.indeterminate = selected.length > 0 && selected.length < currentIds.length;
+}
+function renderRows(rows) {
+    if (!rows.length) {
+        elements.employeeTableBody.innerHTML = '<tr><td colspan="10" class="empty-state">No employee records match the current filters.</td></tr>';
+        updateSummary([]);
+        updateSelectionState();
+        return;
+    }
+    elements.employeeTableBody.innerHTML = rows.map((employee) => `
+        <tr>
+            <td class="checkbox-cell"><input type="checkbox" data-row-select="${employee.id}" ${state.selectedIds.has(String(employee.id)) ? "checked" : ""} aria-label="Select employee ${safe(employee.fullName)}"></td>
+            <td class="nowrap">${safe(employee.id)}</td>
+            <td><div class="employee-cell"><div class="employee-avatar">${safe(window.EmsApp.getInitials(employee.fullName || employee.username))}</div><div class="employee-meta"><strong>${safe(employee.fullName || "-")}</strong><small>${safe(employee.email || "-")}</small><span class="secondary-line">${safe(employee.username || "-")}</span></div></div></td>
+            <td>${safe(employee.department || "-")}</td>
+            <td>${safe(employee.role || "-")}</td>
+            <td><span class="${roleBadgeClass(employee.userRole)}">${safe(employee.userRole || "-")}</span></td>
+            <td class="nowrap">${safe(window.EmsApp.formatDate(employee.joiningDate))}</td>
+            <td class="numeric-cell">${safe(window.EmsApp.formatCurrency(employee.salary))}</td>
+            <td><span class="${badgeClass(employee.status)}">${safe(employee.status || "-")}</span></td>
+            <td><div class="inline-actions"><a class="button secondary" href="/update-employee.html?id=${employee.id}">Edit</a><button type="button" class="ghost" data-status-id="${employee.id}" data-next-status="${employee.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"}">${employee.status === "ACTIVE" ? "Deactivate" : "Activate"}</button></div></td>
+        </tr>
+    `).join("");
+    updateSummary(rows);
+    updateSelectionState();
+}
+async function loadEmployees(options) {
+    const config = options || {};
+    if (state.loading) return;
+    if (!config.skipValidation && !validateFilters()) return;
+    state.loading = true;
+    if (!config.preserveMessage) clearMessage();
+    if (config.showLoader !== false) elements.employeeTableBody.innerHTML = '<tr><td colspan="10" class="empty-state">Loading employee records...</td></tr>';
+    try {
+        const { response, payload } = await window.EmsApp.request(`/employees?${buildQuery().toString()}`);
+        if (!response.ok) {
+            showMessage("error", window.EmsApp.extractError(payload, "Failed to load employees"));
+            elements.employeeTableBody.innerHTML = '<tr><td colspan="10" class="empty-state">Unable to load employee records.</td></tr>';
+            state.rows = [];
+            state.totalElements = 0;
+            state.totalPages = 0;
+            updateSummary([]);
+            updateSelectionState();
+            return;
+        }
+        const pageData = payload.data || {};
+        state.page = Number(pageData.page ?? 0);
+        state.totalPages = Number(pageData.totalPages ?? 0);
+        state.totalElements = Number(pageData.totalElements ?? 0);
+        state.rows = pageData.content || [];
+        state.lastRefreshedAt = new Date().toISOString();
+        state.selectedIds.clear();
+        const maxPage = Math.max(state.totalPages - 1, 0);
+        elements.previousPage.disabled = state.page <= 0;
+        elements.nextPage.disabled = state.totalPages === 0 || state.page >= maxPage;
+        renderFilterChips();
+        renderRows(state.rows);
+    } catch (error) {
+        showMessage("error", "Unable to connect to the server");
+    } finally {
+        state.loading = false;
+    }
+}
+async function updateStatus(employeeId, nextStatus) {
+    try {
+        const { response, payload } = await window.EmsApp.request(`/employees/${employeeId}/status`, { method: "PATCH", body: { status: nextStatus } });
+        if (!response.ok) { showMessage("error", window.EmsApp.extractError(payload, "Unable to update employee status")); return; }
+        showMessage("success", payload.message || "Employee status updated successfully");
+        await loadEmployees({ preserveMessage: true });
+    } catch (error) {
+        showMessage("error", "Unable to connect to the server");
+    }
+}
+async function updateSelectedEmployees(status) {
+    const employeeIds = state.rows.map((employee) => String(employee.id)).filter((id) => state.selectedIds.has(id)).map((id) => Number(id));
+    if (!employeeIds.length) { showMessage("error", "Select at least one employee on the current page"); return; }
+    try {
+        const { response, payload } = await window.EmsApp.request("/employees/status/bulk", { method: "PATCH", body: { employeeIds, status } });
+        if (!response.ok) { showMessage("error", window.EmsApp.extractError(payload, "Unable to update selected employees")); return; }
+        showMessage("success", payload.message || `${employeeIds.length} employees updated successfully`);
+        await loadEmployees({ preserveMessage: true });
+    } catch (error) {
+        showMessage("error", "Unable to connect to the server");
+    }
+}
+function csvValue(value) { const normalized = value === null || value === undefined ? "" : String(value); return `"${normalized.replaceAll("\"", "\"\"")}"`; }
+async function exportEmployees() {
+    if (!validateFilters()) return;
+    const originalLabel = elements.exportButton.textContent;
+    elements.exportButton.disabled = true;
+    elements.exportButton.textContent = "Preparing export...";
+    try {
+        let exportPage = 0;
+        let totalPages = 1;
+        const exported = [];
+        while (exportPage < totalPages) {
+            const { response, payload } = await window.EmsApp.request(`/employees?${buildQuery({ page: exportPage, size: 100 }).toString()}`);
+            if (!response.ok) throw new Error(window.EmsApp.extractError(payload, "Unable to export employees"));
+            const pageData = payload.data || {};
+            exported.push(...(pageData.content || []));
+            totalPages = Number(pageData.totalPages ?? 0);
+            exportPage += 1;
+            if (pageData.last || totalPages === 0) break;
+        }
+        if (!exported.length) { showMessage("error", "No employee records are available for export"); return; }
+        const csvLines = [[ "Employee ID", "Full Name", "Username", "Email", "Department", "Job Role", "Access Role", "Joining Date", "Salary", "Status", "Address" ].map(csvValue).join(","), ...exported.map((employee) => [ employee.id, employee.fullName, employee.username, employee.email, employee.department, employee.role, employee.userRole, employee.joiningDate, window.EmsApp.formatCurrency(employee.salary), employee.status, employee.address ].map(csvValue).join(","))];
+        window.EmsApp.downloadTextFile(`employees-${new Date().toISOString().slice(0, 10)}.csv`, csvLines.join("\r\n"), "text/csv;charset=utf-8");
+        showMessage("success", `Exported ${exported.length} employee records to CSV`);
+    } catch (error) {
+        showMessage("error", error.message || "Unable to export employees");
+    } finally {
+        elements.exportButton.disabled = false;
+        elements.exportButton.textContent = originalLabel;
+    }
+}
+function setAutoRefresh() {
+    if (state.autoRefreshHandle) { window.clearInterval(state.autoRefreshHandle); state.autoRefreshHandle = null; }
+    const interval = Number(elements.autoRefresh.value);
+    if (!interval) return;
+    state.autoRefreshHandle = window.setInterval(() => { if (!state.loading && state.selectedIds.size === 0) loadEmployees({ preserveMessage: true, showLoader: false }); }, interval);
+}
+elements.filtersForm.addEventListener("submit", async (event) => { event.preventDefault(); state.page = 0; await loadEmployees(); });
+elements.clearFiltersButton.addEventListener("click", async () => { elements.filtersForm.reset(); state.page = 0; state.selectedIds.clear(); clearMessage(); window.EmsApp.clearFormErrors(elements.filtersForm); renderFilterChips(); setAutoRefresh(); await loadEmployees({ skipValidation: true }); });
+elements.refreshButton.addEventListener("click", async () => { await loadEmployees(); });
+elements.pageSize.addEventListener("change", async () => { state.page = 0; await loadEmployees(); });
+elements.sortField.addEventListener("change", async () => { state.page = 0; await loadEmployees(); });
+elements.sortDirection.addEventListener("change", async () => { state.page = 0; await loadEmployees(); });
+elements.statusFilter.addEventListener("change", async () => { state.page = 0; await loadEmployees(); });
+elements.autoRefresh.addEventListener("change", setAutoRefresh);
+elements.previousPage.addEventListener("click", async () => { state.page = Math.max(state.page - 1, 0); await loadEmployees(); });
+elements.nextPage.addEventListener("click", async () => { state.page = Math.min(state.page + 1, Math.max(state.totalPages - 1, 0)); await loadEmployees(); });
+elements.selectAllRows.addEventListener("change", (event) => {
+    const checked = event.target.checked;
+    state.rows.forEach((employee) => checked ? state.selectedIds.add(String(employee.id)) : state.selectedIds.delete(String(employee.id)));
+    document.querySelectorAll("[data-row-select]").forEach((checkbox) => { checkbox.checked = checked; });
+    updateSelectionState();
+});
+elements.employeeTableBody.addEventListener("change", (event) => {
+    const checkbox = event.target.closest("[data-row-select]");
+    if (!checkbox) return;
+    const employeeId = String(checkbox.getAttribute("data-row-select"));
+    if (checkbox.checked) state.selectedIds.add(employeeId); else state.selectedIds.delete(employeeId);
+    updateSelectionState();
+});
+elements.employeeTableBody.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-status-id]");
+    if (!button) return;
+    await updateStatus(button.getAttribute("data-status-id"), button.getAttribute("data-next-status"));
+});
+elements.activateSelectedButton.addEventListener("click", async () => { await updateSelectedEmployees("ACTIVE"); });
+elements.deactivateSelectedButton.addEventListener("click", async () => { await updateSelectedEmployees("INACTIVE"); });
+elements.exportButton.addEventListener("click", exportEmployees);
+elements.logoutButton.addEventListener("click", window.EmsApp.redirectToLogin);
+window.addEventListener("beforeunload", () => { if (state.autoRefreshHandle) window.clearInterval(state.autoRefreshHandle); });
+setSessionSummary();
+renderFilterChips();
+setAutoRefresh();
+loadEmployees({ skipValidation: true });
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="profile-page">
+<div class="app-shell">
+    <section class="hero profile-hero">
+        <div class="hero-copy profile-hero-copy">
+            <span class="eyebrow">Employee Profile</span>
+            <h1>My Profile</h1>
+            <p class="profile-hero-note"><strong>Your account summary is ready below.</strong></p>
+        </div>
+
+        <div class="hero-actions profile-hero-actions" id="heroActions">
+            <button type="button" class="secondary" id="logoutButton">Logout</button>
+        </div>
+    </section>
+
+    <section class="panel panel-spaced">
+        <div class="panel-header">
+            <div>
+                <span class="section-kicker">Profile Snapshot</span>
+                <h2 class="panel-title">Current employee summary</h2>
+            </div>
+            <p class="panel-subtitle">
+                Your personal details, access role, and employment metadata are grouped into a more readable layout.
+            </p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="identity-grid" id="identityGrid">
+            <div class="mini-card"><strong>Loading...</strong><span class="muted">Profile summary</span></div>
+            <div class="mini-card"><strong>-</strong><span class="muted">Access role</span></div>
+            <div class="mini-card"><strong>-</strong><span class="muted">Current status</span></div>
+        </div>
+
+        <div class="identity-kv" id="profileDetails">
+            <div>Loading profile details...</div>
+        </div>
+    </section>
+</div>
+
+<script src="/assets/app.js"></script>
+<script>
+(function () {
+    const session = window.EmsApp.requireAuth();
+    if (!session) {
+        return;
+    }
+    window.EmsApp.showPendingLoginWarning();
+    const identityGrid = document.getElementById("identityGrid");
+    const profileDetails = document.getElementById("profileDetails");
+    const message = document.getElementById("message");
+    const heroActions = document.getElementById("heroActions");
+    const logoutButton = document.getElementById("logoutButton");
+
+    if (session && session.user.userRole === "ADMIN") {
+        heroActions.insertAdjacentHTML("afterbegin", '<a class="button secondary" href="/employee-list.html">Dashboard</a>');
+    }
+
+    function showMessage(text) {
+        message.className = "message show error";
+        message.textContent = text;
+    }
+
+    function buildProfileField(label, value) {
+        return `<div><small>${label}</small><strong>${value || "-"}</strong></div>`;
+    }
+
+    async function loadProfile() {
+        try {
+            const { response, payload } = await window.EmsApp.request("/employees/me");
+
+            if (!response.ok) {
+                showMessage(window.EmsApp.extractError(payload, "Failed to load profile"));
+                return;
+            }
+
+            const employee = payload.data;
+            identityGrid.innerHTML = `
+                <div class="mini-card"><strong>${employee.fullName}</strong><span class="muted">${employee.department}</span></div>
+                <div class="mini-card"><strong>${employee.userRole}</strong><span class="muted">Platform access role</span></div>
+                <div class="mini-card"><strong>${employee.status}</strong><span class="muted">Employment status</span></div>
+            `;
+
+            profileDetails.innerHTML = [
+                buildProfileField("Employee ID", employee.id),
+                buildProfileField("Username", employee.username),
+                buildProfileField("Email", employee.email),
+                buildProfileField("Phone", employee.phone),
+                buildProfileField("Job Role", employee.role),
+                buildProfileField("Salary", window.EmsApp.formatCurrency(employee.salary)),
+                buildProfileField("Joining Date", window.EmsApp.formatDate(employee.joiningDate)),
+                buildProfileField("Last Login", window.EmsApp.formatDateTime(employee.lastLoginAt)),
+                buildProfileField("Created At", window.EmsApp.formatDateTime(employee.createdAt)),
+                buildProfileField("Last Updated", window.EmsApp.formatDateTime(employee.updatedAt)),
+                buildProfileField("Address", employee.address)
+            ].join("");
+        } catch (error) {
+            showMessage("Unable to connect to the server");
+        }
+    }
+
+    logoutButton.addEventListener("click", window.EmsApp.redirectToLogin);
+    loadProfile();
+}());
+</script>
+</body>
+</html>

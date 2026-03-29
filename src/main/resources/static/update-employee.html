@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Employee</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="admin-page">
+<div class="admin-shell">
+    <header class="admin-topbar">
+        <div class="admin-brand">
+            <span class="section-kicker">Admin Edit</span>
+            <h1>Update employee</h1>
+            <p>Edit only the operational fields that are allowed to change.</p>
+        </div>
+
+        <div class="admin-actions">
+            <a class="button secondary" href="/employee-list.html">Dashboard</a>
+            <button type="button" class="secondary" id="logoutButton">Logout</button>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div class="admin-note">
+                <strong id="employeeName">Loading...</strong>
+                <span>Selected employee</span>
+            </div>
+
+            <div class="admin-note">
+                <strong id="employeeStatus">-</strong>
+                <span>Current status</span>
+            </div>
+
+            <div class="admin-note">
+                <strong>Immutable identity fields</strong>
+                <p>Username and email stay read-only here so the employee identity record remains stable.</p>
+            </div>
+
+            <div class="admin-note">
+                <strong id="employeeMeta">Loading...</strong>
+                <span>Record summary</span>
+            </div>
+        </aside>
+
+        <main class="admin-panel">
+            <div class="admin-panel-header">
+                <div class="admin-panel-title">
+                    <h2 class="panel-title">Edit operational details</h2>
+                    <p class="panel-subtitle">Phone, department, role, salary, and address must stay valid before saving.</p>
+                </div>
+            </div>
+
+            <form id="updateForm" class="stack" novalidate>
+                <div id="message" class="message"></div>
+
+                <div class="admin-form-grid">
+                    <div class="field">
+                        <label for="phone">Phone <span class="required-mark">*</span></label>
+                        <input id="phone" name="phone" inputmode="numeric" maxlength="10" pattern="\d{10}" placeholder="9876543210" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="department">Department <span class="required-mark">*</span></label>
+                        <input id="department" name="department" maxlength="100" placeholder="Platform Engineering" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="role">Job Role <span class="required-mark">*</span></label>
+                        <input id="role" name="role" maxlength="100" placeholder="Senior Software Engineer" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="salary">Salary <span class="required-mark">*</span></label>
+                        <input id="salary" name="salary" type="number" min="0.01" step="0.01" placeholder="85000" required>
+                    </div>
+
+                    <div class="field span-full">
+                        <label for="address">Address <span class="required-mark">*</span></label>
+                        <textarea id="address" name="address" maxlength="255" placeholder="Whitefield, Bengaluru" required></textarea>
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button type="submit" id="saveButton">Save Changes</button>
+                    <button type="button" class="secondary" id="reloadButton">Reload</button>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+
+<script src="/assets/app.js"></script>
+<script>
+(function () {
+    const session = window.EmsApp.requireAuth(["ADMIN"]);
+    if (!session) {
+        return;
+    }
+    window.EmsApp.showPendingLoginWarning();
+
+    const employeeId = new URLSearchParams(window.location.search).get("id");
+    const form = document.getElementById("updateForm");
+    const message = document.getElementById("message");
+    const employeeName = document.getElementById("employeeName");
+    const employeeStatus = document.getElementById("employeeStatus");
+    const employeeMeta = document.getElementById("employeeMeta");
+    const saveButton = document.getElementById("saveButton");
+    const reloadButton = document.getElementById("reloadButton");
+    const logoutButton = document.getElementById("logoutButton");
+
+    function showMessage(type, text) {
+        message.className = `message show ${type}`;
+        message.textContent = text;
+    }
+
+    function clearMessage() {
+        message.className = "message";
+        message.textContent = "";
+    }
+
+    function setFormEnabled(enabled) {
+        saveButton.disabled = !enabled;
+        reloadButton.disabled = !enabled;
+    }
+
+    function populateEmployee(employee) {
+        employeeName.textContent = employee.fullName || "Employee";
+        employeeStatus.textContent = employee.status || "-";
+        employeeMeta.textContent = `ID ${employee.id} | ${employee.username} | ${employee.email}`;
+        form.phone.value = employee.phone || "";
+        form.department.value = employee.department || "";
+        form.role.value = employee.role || "";
+        form.salary.value = employee.salary || "";
+        form.address.value = employee.address || "";
+    }
+
+    function buildPayload() {
+        return {
+            phone: form.phone.value.trim(),
+            department: form.department.value.trim(),
+            role: form.role.value.trim(),
+            salary: form.salary.value,
+            address: form.address.value.trim()
+        };
+    }
+
+    function validateForm(payload) {
+        window.EmsApp.clearFormErrors(form);
+        const errors = window.EmsApp.validateEmployeePayload(payload, { mode: "update" });
+
+        if (!errors.length) {
+            return true;
+        }
+
+        window.EmsApp.applyFieldErrors(form, errors);
+        window.EmsApp.focusFirstInvalidField(form);
+        showMessage("error", errors[0].message);
+        return false;
+    }
+
+    async function loadEmployee() {
+        clearMessage();
+        window.EmsApp.clearFormErrors(form);
+
+        if (!employeeId) {
+            setFormEnabled(false);
+            showMessage("error", "Employee id is required");
+            return;
+        }
+
+        setFormEnabled(false);
+
+        try {
+            const { response, payload } = await window.EmsApp.request(`/employees/${employeeId}`);
+
+            if (!response.ok) {
+                showMessage("error", window.EmsApp.extractError(payload, "Unable to load employee details"));
+                return;
+            }
+
+            populateEmployee(payload.data);
+        } catch (error) {
+            showMessage("error", "Unable to connect to the server");
+        } finally {
+            setFormEnabled(true);
+        }
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearMessage();
+
+        if (!employeeId) {
+            showMessage("error", "Employee id is required");
+            return;
+        }
+
+        const payload = buildPayload();
+        if (!validateForm(payload)) {
+            return;
+        }
+
+        saveButton.disabled = true;
+
+        try {
+            const { response, payload: result } = await window.EmsApp.request(`/employees/${employeeId}`, {
+                method: "PUT",
+                body: {
+                    ...payload,
+                    salary: Number(payload.salary)
+                }
+            });
+
+            if (!response.ok) {
+                const fieldErrors = window.EmsApp.extractFieldErrors(result);
+                window.EmsApp.clearFormErrors(form);
+                if (fieldErrors.length) {
+                    window.EmsApp.applyFieldErrors(form, fieldErrors);
+                    window.EmsApp.focusFirstInvalidField(form);
+                }
+                showMessage("error", window.EmsApp.extractError(result, "Unable to update employee"));
+                return;
+            }
+
+            populateEmployee(result.data);
+            showMessage("success", result.message);
+        } catch (error) {
+            showMessage("error", "Unable to connect to the server");
+        } finally {
+            saveButton.disabled = false;
+        }
+    });
+
+    reloadButton.addEventListener("click", loadEmployee);
+    logoutButton.addEventListener("click", window.EmsApp.redirectToLogin);
+    loadEmployee();
+}());
+</script>
+</body>
+</html>

@@ -2,6 +2,8 @@ target/
 *.log
 .tools/
 .tmp-remote-inspect/
+.env
+.env.local
 
 # IDE files
 .idea/

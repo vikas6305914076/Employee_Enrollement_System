@@ -27,6 +27,8 @@ app:
   jwt:
     secret: ${EMS_JWT_SECRET:ZW1zLXN1cGVyLXNlY3JldC1rZXktZm9yLWRldi1vbmx5LXBsZWFzZS1jaGFuZ2UtdGhpcy1pbi1wcm9kLTIwMjY=}
     access-token-expiration: ${EMS_JWT_ACCESS_TOKEN_EXPIRATION:PT8H}
+  cors:
+    allowed-origin-patterns: ${EMS_ALLOWED_ORIGIN_PATTERNS:http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080}
   bootstrap-admin:
     enabled: ${EMS_BOOTSTRAP_ADMIN_ENABLED:true}
     first-name: ${EMS_BOOTSTRAP_ADMIN_FIRST_NAME:System}

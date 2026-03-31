@@ -5,6 +5,7 @@
     const PHONE_PATTERN = /^\d{10}$/;
     const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).+$/;
     const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const API_BASE_URL = trimValue((window.EMS_CONFIG && window.EMS_CONFIG.apiBaseUrl) || "").replace(/\/+$/, "");
 
     function parseJson(value) {
         try {
@@ -16,6 +17,18 @@
 
     function trimValue(value) {
         return String(value ?? "").trim();
+    }
+
+    function resolveApiUrl(url) {
+        if (!API_BASE_URL || /^https?:\/\//i.test(url)) {
+            return url;
+        }
+
+        if (!url) {
+            return API_BASE_URL;
+        }
+
+        return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
     }
 
     function getSession() {
@@ -143,7 +156,7 @@
             }
         }
 
-        const response = await fetch(url, {
+        const response = await fetch(resolveApiUrl(url), {
             method: requestOptions.method || "GET",
             headers: buildHeaders(requestOptions),
             body: requestOptions.body !== undefined ? JSON.stringify(requestOptions.body) : undefined

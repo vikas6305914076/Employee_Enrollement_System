@@ -43,8 +43,11 @@ Set these Railway environment variables:
 - `EMS_DB_USERNAME=...`
 - `EMS_DB_PASSWORD=...`
 - `EMS_JWT_SECRET=...`
+- `EMS_ALLOWED_ORIGIN_PATTERNS=https://your-project.vercel.app,https://*.vercel.app`
 
 The application now also reads Railway's `PORT` variable automatically in production.
+
+If you see `Invalid CORS request` after deploying the frontend, it usually means Railway is still running without the correct `EMS_ALLOWED_ORIGIN_PATTERNS` value. Update that variable, redeploy Railway, and then retry from Vercel.
 
 ## Database
 

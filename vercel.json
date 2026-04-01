@@ -1,5 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/login.html",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/auth/:path*",
@@ -12,13 +19,10 @@
     {
       "source": "/employees/:path*",
       "destination": "https://employeeenrollementsystem-production.up.railway.app/employees/:path*"
-    }
-  ],
-  "redirects": [
+    },
     {
-      "source": "/",
-      "destination": "/login.html",
-      "permanent": false
+      "source": "/(.*)",
+      "destination": "/src/main/resources/static/$1"
     }
   ]
 }

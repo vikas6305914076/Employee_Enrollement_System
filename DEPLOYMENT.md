@@ -2,16 +2,18 @@
 
 ## Frontend on Vercel
 
-Deploy the folder `src/main/resources/static` as the Vercel project root.
+You can now deploy the repository root on Vercel using the new top-level `vercel.json`.
 
-Before deploying, open `src/main/resources/static/assets/config.js` and set:
+What the root Vercel config does:
 
-```js
-apiBaseUrl: "https://your-railway-service.up.railway.app"
-```
+- redirects `/` to `/login.html`
+- serves frontend files from `src/main/resources/static`
+- proxies `/auth/*` and `/employees*` requests to Railway:
+  - `https://employeeenrollementsystem-production.up.railway.app`
 
 Files included in the Vercel deployment:
 
+- `vercel.json`
 - `src/main/resources/static/login.html`
 - `src/main/resources/static/index.html`
 - `src/main/resources/static/employee-list.html`
@@ -19,6 +21,8 @@ Files included in the Vercel deployment:
 - `src/main/resources/static/update-employee.html`
 - `src/main/resources/static/assets`
 - `src/main/resources/static/vercel.json`
+
+If you prefer deploying only `src/main/resources/static` as the Vercel project root, that folder's local `vercel.json` has also been updated with the same Railway proxy routes.
 
 ## Backend on Railway
 
@@ -39,7 +43,6 @@ Set these Railway environment variables:
 - `EMS_DB_USERNAME=...`
 - `EMS_DB_PASSWORD=...`
 - `EMS_JWT_SECRET=...`
-- `EMS_ALLOWED_ORIGIN_PATTERNS=https://your-frontend.vercel.app`
 
 The application now also reads Railway's `PORT` variable automatically in production.
 

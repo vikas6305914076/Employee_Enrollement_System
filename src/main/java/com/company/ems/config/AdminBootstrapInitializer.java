@@ -10,6 +10,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -21,15 +22,19 @@ public class AdminBootstrapInitializer implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public void run(ApplicationArguments args) {
         if (!adminBootstrapProperties.enabled()) {
             log.info("Bootstrap admin creation is disabled for the active profile");
             return;
         }
 
-        if (employeeRepository.existsByUsernameIgnoreCase(adminBootstrapProperties.username())) {
-            log.info("Bootstrap admin already exists username={}", adminBootstrapProperties.username());
-            return;
+        long existingCount = employeeRepository.count();
+        if (existingCount > 0) {
+            log.info("Clearing {} existing employee record(s) for fresh admin bootstrap", existingCount);
+            employeeRepository.deleteAll();
+            employeeRepository.flush();
+            log.info("All existing employee records cleared");
         }
 
         Employee adminUser = Employee.builder()
